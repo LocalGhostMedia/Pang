@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<!--
+    Licensed to the Apache Software Foundation (ASF) under one
+    or more contributor license agreements.  See the NOTICE file
+    distributed with this work for additional information
+    regarding copyright ownership.  The ASF licenses this file
+    to you under the Apache License, Version 2.0 (the
+    "License"); you may not use this file except in compliance
+    with the License.  You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing,
+    software distributed under the License is distributed on an
+    "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+     KIND, either express or implied.  See the License for the
+    specific language governing permissions and limitations
+    under the License.
+-->
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <!--<meta name="format-detection" content="telephone=no" />
+         WARNING: for iOS 7, remove the width=device-width and height=device-height attributes. See https://issues.apache.org/jira/browse/CB-4323 -->
+        <meta name="viewport" content="user-scalable=no" />
+   <!--      <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=1024, target-densitydpi=device-dpi" /> -->
+        <link rel="stylesheet" type="text/css" href="index.css" />
+        <meta name="msapplication-tap-highlight" content="no" />
+        <script type="text/javascript" src="cordova.js"></script>
+        <script type="text/javascript" src="js/index.js"></script>
+        <script src="http://api.agecheq.com/library/agecheq.js"></script>
+
+    <script>
+       preventDefaultScroll = function(event) {
+        // Prevent scrolling on this element
+        event.preventDefault();
+        window.scroll(0,0);
+        return false;
+    };
+    
+    window.document.addEventListener('touchmove', preventDefaultScroll, false);
+    var voice = false;
+   
+
+    // global variables
+    var cvs;
+    var ctx;
+    var ctx2;
+    var ctx3;
+    var move= true;
+    var score =0;
+    var rndNum;
+    var pause=false;
+    var objNum= 6;
+    var fontSize = 10;
+    var currLvlNm =1;
+    var prevLvlNm =0;
+    var pastLvlNm=0;
+
+    // turn false
+    var infection= false;
+
+    var highlight=false;
+    var spinner=false;
+ 
+    var $ = function(q){return document.getElementById(q)};
+    // JSON for objects positions and attributes
+
+var game={
+    started:false,
+    startedHover:true,
+    lives:5,
+    score:0,
+    highestScore:0,
+    infectionSpeed:.05,
+    runTime:70,
+    changeBG:false,
+    objNum:8,
+    ACcred:3,
+
+    level:0,
+
+    infectedResolved:0,
+
+    objects:{
+
+      init:false,
+      saved:false,
+      infection:5,  
+      obj1:{x:-1,y:-1,opacity:0,locked:false,dead:false},
+      obj2:{x:-1,y:-1,opacity:0,locked:false,dead:false},
+      obj3:{x:-1,y:-1,opacity:0,locked:false,dead:false},
+      obj4:{x:-1,y:-1,opacity:0,locked:false,dead:false},
+      obj5:{x:-1,y:-1,opacity:0,locked:false,dead:false},
+      obj6:{x:-1,y:-1,opacity:0,locked:false,dead:false},
+      obj7:{x:-1,y:-1,opacity:0,locked:false,dead:false},
+      obj8:{x:-1,y:-1,opacity:0,locked:false,dead:false},
+      obj9:{x:-1,y:-1,opacity:0,locked:false,dead:false},
+
+    },
+
+    colorStyle:{
+      spinner:'0,0,0',
+      highlight:'255,255,255',
+      current:'255,125,0',
+      next:'125,255,0',  
+    },
+
+
+    hud:{
+
+      pos:{x:0,y:0},
+      score:0,    
+      highestScore:0,
+      
+    },
+    gridObj:{
+        width:0,
+        height:0,
+    },
+    playerObj:{
+      pos:{x:3,y:1},
+    },
+
+    spinObj:{
+        pos:{x:10,y:10},
+      },
+
+    endObj:{
+      pos:{x:0,y:0},
+      size:{sX:0, sY:0}
+    },
+
+  }
+
+    var playerImg = new Image();
+    var pointImg = new Image();
+    var down = false;
+
+    var transition = false;
+    var p;
+    var c;
+
+    function onclick(e){e.preventDefault()}
+    function init(){
+
+      cvs = document.getElementById('cvs');
+      evtLyr = document.getElementById('eventLayer');
+      // canvas.addEventListener('click',onclick);
+      // window.addEventListener('click',onclick);
+      setTimeout("window.scrollTo(0,0);",1000)
+      evtLyr.addEventListener('touchstart',interactionDown);
+      // canvas.addEventListener('MSPointerDown',interactionDown);
+      //evtLyr.addEventListener('touchmove',interactionMove);
+     // evtLyr.addEventListener('mousedown',interactionDown);
+      // canvas.addEventListener('MSPointerMove',interactionMove);
+
+      ctx = cvs.getContext("2d");
+
+
+      var width = screen.height;
+      var height = screen.width;
+      var screenRatio;
+      var realWidth;
+      var realHeight;
+
+      if(width>height){realWidth=width;realHeight=height;screenRatio=(height/width);}
+      else{realWidth=height;realHeight=width;screenRatio=(width/height);}
+
+      if(isNaN(screenRatio)){
+ 
+      if(window.innerHeight>window.innerWidth){realWidth=window.innerHeight; realHeight= window.innerWidth ;screenRatio = (window.innerWidth/window.innerHeight);}
+       
+      else{realWidth=window.innerWidth; realHeight= window.innerHeight;screenRatio = (window.innerHeight/window.innerWidth);}
+       
+      }
+
+      // var iPortraitWidth=768;
+      // var iLandscapeWidth=1024;
+
+      // var height = window.innerWidth;
+      // var width = window.innerHeight;
+
+      // var ratio = height/width;
+
+     // $('debug').innerHTML = "width:"+realWidth+", height:"+realHeight;
+      cvs.width = 1024//realWidth;//window.innerWidth-20;
+      cvs.height = Math.floor(1024*screenRatio);//window.innerHeight;
+      evtLyr.width = 1024;
+      evtLyr.height = Math.floor(1024*screenRatio);
+      // set txtBox atts
+     
+      game.hud.pos.x= (cvs.width/2)-5;
+      game.hud.pos.y= 0;
+
+      // Now the canvas dimentions are set, set the corner coordinates into the JSON object for point spawning
+      
+      game.gridObj.width= cvs.width/8;
+      game.gridObj.height= cvs.height/4;
+
+      
+
+        //standard
+        ctx.fillStyle = "rgb("+game['colorStyle']['current']+");";
+        ctx.fillRect(0,0,cvs.width,(cvs.height/4));
+        ctx.fillRect(0,(cvs.height/4),cvs.width,(cvs.height/4));
+        ctx.fillRect(0,(cvs.height/2),cvs.width,(cvs.height/4));
+        ctx.fillRect(0,((cvs.height/4)*3),cvs.width,(cvs.height/4));
+
+        // Draw semi transparent rectangles
+        for (i=0;i<10;i++){
+            ctx.fillStyle = 'rgba(255,255,255,'+(i+1)/10+')';
+          for (j=0;j<4;j++){
+            ctx.fillRect(i*cvs.width/8,j*cvs.height/4,cvs.width/8,cvs.height/4)
+          }
+        }
+         for (i=0;i<4;i++){
+            ctx.fillStyle = 'rgba(255,255,255,'+(i+1)/10+')';
+            ctx.fillRect(0,i*cvs.height/4,cvs.width,cvs.height/4)
+        }
+      
+        // $('ageCheqScreenPP').style.width=  "1024px";
+        // $('ageCheqScreenPP').style.height= (1024*screenRatio)+"px"; 
+
+        $('eventLayer').style.width=  "1024px";
+        $('eventLayer').style.height= (Math.floor(1024*screenRatio))+"px"; 
+
+        //$('AC_AR').style.height= (1004*screenRatio)+"px"; 
+        $('AC_HTP').style.top= (((1004*screenRatio)/2)-256)+"px"; 
+        $('AC_AVW').style.top= (((1004*screenRatio)/2)-256)+"px"; 
+        $('AC_AR').style.top= (((1004*screenRatio)/2)-294)+"px"; 
+        $('AC_AR2').style.top= (((1004*screenRatio)/2)-294)+"px"; 
+        $('AC_GO').style.top= (((1004*screenRatio)/2)-203)+"px"; 
+
+        $('HTP_btnPly').style.left= (1024-414)/2+"px"; 
+        $('AR2_tryAgainBtn').style.left= (1024-498)/2+"px"; 
+
+        $('hud').style.top= (900*screenRatio)+"px"; 
+
+        var oldACcred = window.localStorage.getItem("ACcred");
+        if(oldACcred!=undefined){game.ACcred=oldACcred;}
+
+        if(game.ACcred<=0){
+          $('AC_AVW').style.display="none";
+          $('AC_AR').style.display="block";
+        }
+        else{
+          $('AVWmessage').innerHTML="You have "+game.ACcred+" credits left!";
+        }
+
+        gameLoop();
+
+    }
+
+
+    var txtNm=1;
+    var stepIsFunc=false;
+    var txtChanging = false;
+    
+
+    function changeBG(){
+
+      prevStr=game['colorStyle']['current'];
+      p = prevStr.split(",");
+      
+      var nextRBG = Math.floor(Math.random()*255)+","+Math.floor(Math.random()*255)+","+Math.floor(Math.random()*255);
+
+      game['colorStyle']['next'] = nextRBG;
+      
+      currStr= nextRBG;
+      c = currStr.split(",");
+
+      transition = true;
+      
+    };
+    function transitionBG(p,c){
+          //console.log(p,c)
+         for (var i = p.length - 1; i >= 0; i--) {
+        
+          if(p[i]<c[i]){
+              p[i]=parseInt(p[i])+1;
+          }
+          else if(p[i]>c[i]){
+              p[i]=parseInt(p[i])-1;
+              
+          }
+          game['colorStyle']['current']= p[0]+','+p[1]+','+p[2];
+        }
+
+        ctx.fillStyle = "rgb("+game['colorStyle']['current']+");";
+        ctx.fillRect(0,0,cvs.width,(cvs.width/4));
+        ctx.fillRect(0,(cvs.height/4),cvs.width,(cvs.width/4));
+        ctx.fillRect(0,(cvs.height/2),cvs.width,(cvs.width/4));
+        ctx.fillRect(0,((cvs.height/4)*3),cvs.width,(cvs.width/4));
+
+         for (i=0;i<10;i++){
+            ctx.fillStyle = 'rgba(255,255,255,'+(i+1)/10+')';
+          for (j=0;j<4;j++){
+            ctx.fillRect(i*cvs.width/8,j*cvs.height/4,cvs.width/8,cvs.height/4)
+          }
+        }
+
+        for (i=0;i<4;i++){
+            ctx.fillStyle = 'rgba(255,255,255,'+(i+1)/10+')';
+            ctx.fillRect(0,i*cvs.height/4,cvs.width,cvs.height/4)
+        }
+
+        if(p[0]!=c[0]||p[1]!=c[1]||p[2]!=c[2]){}
+        else{changeBG();}
+
+    }
+    function gameLoop(){
+        ctx.clearRect(0,0,cvs.width,cvs.height);
+
+
+        if(game.infectedResolved==game.objects.infection&&game.started){
+          console.log(game.infectedResolved+" , "+game.objects.infection);
+
+          game.infectedResolved=0;
+          game.objects.infection= Math.floor(Math.random()*7)+1;
+
+          game.level ++;
+
+          // if(game.level<8){game.infectionSpeed+=.1;}
+          game.infectionSpeed+=.005;
+          // else{game.infectionSpeed+=.05;}
+
+          resetAll();
+
+          changeBG();
+
+        }
+        
+        if(transition){
+          transitionBG(p,c)
+        }
+
+        //standard
+        ctx.fillStyle = "rgb("+game['colorStyle']['current']+");";
+        ctx.fillRect(0,0,cvs.width,(cvs.height/4));
+        ctx.fillRect(0,(cvs.height/4),cvs.width,(cvs.height/4));
+        ctx.fillRect(0,(cvs.height/2),cvs.width,(cvs.height/4));
+        ctx.fillRect(0,((cvs.height/4)*3),cvs.width,(cvs.height/4));
+
+        // Draw semi transparent circles
+        for (i=0;i<10;i++){
+            ctx.fillStyle = 'rgba(255,255,255,'+(i+1)/10+')';
+          for (j=0;j<4;j++){
+            ctx.fillRect(i*cvs.width/8,j*cvs.height/4,cvs.width/8,cvs.height/4)
+          }
+        }
+         for (i=0;i<4;i++){
+            ctx.fillStyle = 'rgba(255,255,255,'+(i+1)/10+')';
+            ctx.fillRect(0,i*cvs.height/4,cvs.width,cvs.height/4)
+        }
+
+        // draw infection
+        
+        if(infection){drawInfection();}
+
+        $("scoreLabel").style.color = "rgb("+game["colorStyle"]["current"]+")";
+        $("livesLabel").style.color = "rgb("+game["colorStyle"]["current"]+")";
+
+        setTimeout('gameLoop()',game.runTime);
+    }
+
+    var oInfectionUp = true;
+    var oInfection = 0;
+    function drawInfection(){
+
+          if(oInfectionUp&&oInfection<=10){ oInfection+=game.infectionSpeed;   }
+          else if(oInfection>=0){ oInfectionUp=false; oInfection-=.5; }
+          else{oInfectionUp=true;}
+          
+          if(!game['objects']['init']){
+            console.log('init');
+            game['objects']['init'] = true;
+
+            for(i = 1;i<=game['objects']['infection'];i++){
+                game['objects']['obj'+i]['x']= Math.floor(Math.random()*8);
+                game['objects']['obj'+i]['y']= Math.floor(Math.random()*4);
+                var objX = game['objects']['obj'+i]['x'];
+            }
+
+            for(j = 1;j<=game['objects']['infection'];j++){
+            for(i = 1;i<=game['objects']['infection'];i++){
+               
+                if(i==j){continue}
+                if(game['objects']['obj'+i]['x']==game['objects']['obj'+j]['x']&&game['objects']['obj'+i]['y']==game['objects']['obj'+j]['y'])
+                    {   
+                        console.log("overlap at "+game['objects']['obj'+j]['x']+" , "+game['objects']['obj'+j]['y'])
+                        game.infectedResolved++;game['objects']['obj'+i]['dead']=true;game['objects']['obj'+i]['opacity']=0;game['objects']['obj'+i]['locked']=true;
+                    }
+            } 
+            }
+                
+                // if(objX>=7){game['objects']['obj'+i]['x']--}else{game['objects']['obj'+i]['x']++} 
+                   
+                
+            
+          }
+            
+            for(i =1;i<=game['objects']['infection'];i++){
+                if(game['objects']['obj'+i]['locked']){
+                  if(!game['objects']['obj'+i]['dead']){
+                    game['objects']['obj'+i]['opacity']-=game.infectionSpeed*2;
+                    var IO =  game['objects']['obj'+i]['opacity'];
+                    ctx.fillStyle = 'rgba(255,0,0,'+IO/10+')';
+                    ctx.fillRect((game['objects']['obj'+i]['x']*game.gridObj.width),(game['objects']['obj'+i]['y']*game.gridObj.height),game.gridObj.width,game.gridObj.height);
+                    if(IO<=0){game.infectedResolved++;game['objects']['obj'+i]['dead']=true;game['objects']['obj'+i]['opacity']=0}
+                  }
+                }
+                else{
+                game['objects']['obj'+i]['opacity']+= game.infectionSpeed;
+                var IO =  game['objects']['obj'+i]['opacity'];
+              //  console.log('IO ='+IO+', Obj Nm='+i)
+                if(IO>=9){game['objects']['obj'+i]['locked']=true;game['objects']['obj'+i]['opacity']=10;game.lives--;$("lives").innerHTML = game.lives;if(game.lives<=0){setTimeout('gameHandler("end")',2000)}} 
+                  ctx.fillStyle = 'rgba(0,0,0,'+IO/10+')';
+                  ctx.fillRect((game['objects']['obj'+i]['x']*game.gridObj.width),(game['objects']['obj'+i]['y']*game.gridObj.height),game.gridObj.width,game.gridObj.height)
+              }
+
+            }
+          }
+
+    var inputX;
+    var inputY;
+
+    function interactionMove(e){
+      if(!game.startedHover){return}
+      inputX = Math.floor(e.pageX/game.gridObj.width);
+      inputY = Math.floor(e.pageY/game.gridObj.height);
+
+      for(i = 1;i<game['objects']['infection']+1;i++){
+        if(inputX==game['objects']['obj'+i]['x']&&inputY==game['objects']['obj'+i]['y']&&!game['objects']['obj'+i]['locked']){
+          //  console.log('yeshover');
+            if( game['objects']['obj'+i]['opacity']<=0&&!game['objects']['obj'+i]['locked']){ game['objects']['obj'+i]['locked']=true; game.score++;game.infectedResolved++;alert("resolved: "+i);$("score").innerHTML = game.score; }
+            game['objects']['obj'+i]['opacity']-=(game.infectionSpeed);
+        }
+        else{}
+      }
+    }
+
+    function playAudio(url) {
+        // Play the audio file at url
+        var my_media = new Media(url,
+            // success callback
+            function () { console.log("playAudio():Audio Success"); },
+            // error callback
+            function (err) { console.log("playAudio():Audio Error: " + err); }
+        );
+
+        // Play audio
+        my_media.play();
+    }
+      
+    var begGame = true; 
+    var touchCounter = 0;
+    function interactionDown(e){
+      if(!game.started){return}
+
+      inputX = Math.floor(e.touches[0].pageX/game.gridObj.width);
+      inputY = Math.floor(e.touches[0].pageY/game.gridObj.height);
+
+      touchCounter++;
+      
+
+      for(i = 1;i<game['objects']['infection']+1;i++){
+        if(inputX==game['objects']['obj'+i]['x']&&inputY==game['objects']['obj'+i]['y']&&!game['objects']['obj'+i]['locked']){
+            
+            if(game['objects']['obj'+i]['opacity']>game.infectionSpeed){
+              game['objects']['obj'+i]['opacity']-=(game.infectionSpeed*10);
+            }
+            if( game['objects']['obj'+i]['opacity']<=.5&&!game['objects']['obj'+i]['locked'])
+            { 
+              game['objects']['obj'+i]['saved']=true;
+              game['objects']['obj'+i]['locked']=true; 
+              game['objects']['obj'+i]['opacity']=0;
+
+              //alert("resolved: "+i);
+
+              // Play audio
+              playAudio("pop.mp3");
+
+              game.score++; 
+              $("score").innerHTML = game.score; 
+            }
+            
+        } 
+        else{}
+
+      }  
+     // $("debug").innerHTML="inputX: "+inputX+"; inputY: "+inputY+" touch counter : "+touchCounter;
+     
+    }
+
+    var oUp=true;
+    var oUp2=true;
+    var oUpE=new Array();
+    var o=0;
+    var o2=0;
+    var oE= new Array();
+    var enemies = new Array();
+    var highlightSelected = false;
+    
+    function resetAll(){
+
+      game['objects']['init'] = false;
+
+      game['objects']['saved']=false;
+      
+      for(j = 1;j<=10;j++){
+        for(i = 1;i<game['objects']['infection']+1;i++){
+              game['objects']['obj'+i]['opacity']=0;
+              game['objects']['obj'+i]['x']=-1;
+              game['objects']['obj'+i]['y']=-1;
+              game['objects']['obj'+i]['locked']=false; 
+              game['objects']['obj'+i]['dead']=false; 
+        }
+      }
+    }
+
+
+  function gameHandler(state){
+      switch(state){
+
+        case "start":
+
+            resetAll();
+
+            game.score= 0;
+            game.lives= 5;
+            $("score").innerHTML = game.score; 
+            $("lives").innerHTML = game.lives; 
+            $("hud").style.zIndex=10;
+            $("hud").style.display="block";
+           // $("mainScreen").style.zIndex=-5;
+            $("eventLayer").style.zIndex=11;
+
+            infection = true;
+
+        break;
+        case "end":
+
+            if(game.score>game.highestScore){game.highestScore=game.score;window.localStorage.setItem('highestScore',game.highestScore);}
+
+            oInfectionUp = true;
+            oInfection = 0;
+            infection = false;
+            game.infectedResolved = 0;
+            game.lives = 5;
+            
+            $("hud").style.zIndex =- 5;
+           // $("mainScreen").style.zIndex=10;
+            $("bestScoreLabel").innerHTML="Highest Score: "+game.highestScore;
+            $("lastScoreLabel").innerHTML="Last Score:   "+game.score;
+            $("ageCheqScreenPP").style.display="block";
+            $("AC_AVW").style.display = "none";
+            $("AC_AR").style.display = "none";
+            $("AC_HTP").style.display = "none";
+            $("AC_GO").style.display="block";
+            $("eventLayer").style.zIndex=-5;
+            begGame = true; 
+            game.infectionSpeed=.05;
+            resetAll();
+            currLvlNm=1;
+            prevLvlNm=10;
+
+        break;
+
+
+      }
+  }
+    </script>
+
+ <script type="text/javascript" language="javascript">
+  
+        // This event handler is fired once the Cordova libraries are ready
+        function onDeviceReady() {
+
+            deviceID = device.uuid;
+
+            var AppleAppID = "72099bc7-b606-4a7a-9c15-53a24136aaa0";
+            var GoogleAppID = "77337f3f-630a-49f0-a01c-e3b8f2ce18d2";
+
+            AppID=AppleAppID; 
+
+            game.highestScore = window.localStorage.getItem("highestScore");
+            if(game.highestScore == undefined){ window.localStorage.setItem('highestScore',0);game.highestScore =0}
+            $("bestScoreLabel").innerHTML="Highest Score: "+game.highestScore;
+
+            game.started= true;
+
+            navigator.splashscreen.hide();
+            
+            setTimeout("init();ACQ('check');",1000);
+            
+        }
+
+        //initial event handler to detect when appMobi is ready to roll
+        document.addEventListener("deviceready",onDeviceReady,false);
+    
+
+
+      var developerKey = "d0ddf2bf-e808-4e31-a2bf-a113f5aac880";
+      var AppID = "77337f3f-630a-49f0-a01c-e3b8f2ce18d2";
+      var deviceID = "";
+      var userName = "";
+
+      var callType = "check";
+
+      // var baseURL = "http://developer.agecheq.com/developers/";
+      // var isRegURL = baseURL+developerKey+"/devices/"+deviceID+"/isregistered";
+      // var checkURL = baseURL+developerKey+"/devices/"+deviceID+"/applications/"+AppID+"/check";
+
+      function ACQ(cmd){
+
+        switch(cmd){
+
+          case "check": 
+                callType = "check";
+                AgeCheq.check(developerKey,deviceID,AppID,ACQcallback);
+          break;
+
+          case "register": 
+                callType = "register";
+                userName = document.getElementById('AR_input').value;
+               // alert(userName);
+                AgeCheq.register(developerKey,deviceID,userName,"New Device",ACQcallback);
+          break;
+
+          // case "isRegistered": 
+          //       callType = "isRegistered";
+          //       AgeCheq.isRegistered(developerKey,deviceID,AppID,ACQcallback);
+          // break;
+
+          // case "associateData": 
+          //       callType = "associateData";
+          //       AgeCheq.check(developerKey,deviceID,AppID,"ACQcallback");
+          // break;
+
+          // case "ageGate": 
+          //       callType = "ageGate";
+          //       AgeCheq.check(developerKey,deviceID,AppID,"ACQcallback");
+          // break;
+
+        }
+      }
+
+      function ACQcallback(e){
+          
+          var ACQJson = JSON.parse(e);
+
+          switch(callType){
+
+              case "check": 
+
+                  if(ACQJson.rtn == "ok"){
+                    //alert("AC = "+game.ACcred+", trials = "+ACQJson.data.agecheq.trials);
+                    if(game.ACcred!=ACQJson.data.agecheq.trials){
+                          game.ACcred=ACQJson.data.agecheq.trials+1;
+                          window.localStorage.setItem('ACcred',game.ACcred,-1);
+                          $('AVWmessage').innerHTML="You have "+game.ACcred+" credits left!";
+                        }
+
+                    if(ACQJson.data.agecheq.appauthorized&&!ACQJson.data.agecheq.appblocked&&ACQJson.data.agecheq.trials==0){
+                      //$("mainScreen").style.zIndex=10;
+
+                      $("ageCheqScreenPP").style.display = "block";
+                      $("AC_AVW").style.display = "none";
+                      $("AC_AR").style.display = "none";
+                      $("AC_HTP").style.display = "block";
+                      $("AC_GO").style.display = "none";
+                      $("AC_AR2").style.display = "none";
+                    }
+
+                    else if(!ACQJson.data.agecheq.deviceregistered||ACQJson.data.agecheq.trials>0){
+                     
+                        $("ageCheqScreenPP").style.display = "block";
+                        $("AC_AR").style.display = "none";
+                        $("AC_HTP").style.display = "none";
+                        $("AC_GO").style.display = "none";
+                        $("AC_AR2").style.display = "none";
+                      if(game.ACcred>=1){$("AC_AVW").style.display = "block";}
+                      else{
+                        $("AC_AVW").style.display = "none";
+                        $("AC_AR").style.display = "block";
+                      }
+
+                    }
+                    else if(ACQJson.data.agecheq.deviceregistered&&!ACQJson.data.agecheq.appauthorized){
+                      $("ageCheqScreenPP").style.display = "block";
+                      $("AC_AVW").style.display = "none";
+                      $("AC_AR").style.display = "none";
+                      $("AC_HTP").style.display = "none";
+                      $("AC_GO").style.display = "none";
+                      $("AC_AR2").style.display = "block";
+
+                     
+                      
+                    }
+                    else if(ACQJson.data.agecheq.deviceregistered&&ACQJson.data.agecheq.appblocked&&ACQJson.data.agecheq.appauthorized){
+                      
+                      $("ageCheqScreenPP").style.display = "block";
+                      $("AC_AVW").style.display = "none";
+                      $("AC_AR").style.display = "none";
+                      $("AC_HTP").style.display = "none";
+                      $("AC_GO").style.display = "none";
+                      $("AC_AR2").style.display = "block";
+
+                    }
+              
+                  }
+                    
+
+              break;
+
+              case "register": 
+                    if(ACQJson.rtnmsg=="device registered"||ACQJson.rtnmsg=="device already registered"){
+                     
+                       $("ageCheqScreenPP").style.display = "block";
+                      // $("mainScreen").style.zIndex=-10;
+                      // $("ageCheqScreenPP").style.display = "block";
+                      // $("goBtn").style.display = "none";
+                      // $("refreshBtn").style.display = "block";
+                      // $("PPCTA").style.display = "none";
+
+                      // $("PPmessage").innerHTML = "Your parent has not yet approved this game for you. You can play as soon as they approve it at http://parent.agecheq.com.";
+                      ACQ('check');
+                      
+                    }
+                    else{
+                      $("AC_AR").style.background="url('ageCheq/bkgrd-validid.png')";
+                    }
+
+              break;
+
+              // case "isRegistered": 
+
+              // break;
+
+              // case "associateData": 
+
+              // break;
+
+              // case "ageGate": 
+
+              // break;
+
+          }
+      }
+//gameHandler('start')
+      function ACQbtn(btn){
+
+        switch(btn){
+          
+          case "HTP_play":
+            
+            $("AC_AVW").style.display="none";
+            $("ageCheqScreenPP").style.display = "none";
+            game.ACcred--;
+            window.localStorage.setItem('ACcred',game.ACcred,-1);
+            gameHandler('start');
+
+          break;
+
+          case "AVW_play":
+            
+            $("AC_AVW").style.display="none";
+            $("AC_HTP").style.display="block";
+
+          break;
+          
+          case "AVW_verifyAge":
+            $("AC_HTP").style.display="none";
+            $("AC_AVW").style.display="none";
+            $("AC_AR").style.display="block";
+          break;
+
+          case "AR_Go":
+            ACQ('register')
+          break;
+          case "GO_tryAgain":
+            $("AC_GO").style.display="none";
+            $("ageCheqScreenPP").style.display = "none";
+            gameHandler('start');
+
+          break;
+        }
+      }
+
+      </script>
+
+    </head>
+    <body>
+
+    <div id='ageCheqScreenPP'>
+
+      <div class="initScreens" id="AC_AVW">
+        <div id='AVWmessage'></div>
+        <div ontouchstart="ACQbtn('AVW_play')" class="btnPly" id="AVW_btnPly"></div>
+        <div ontouchstart="ACQbtn('AVW_verifyAge')" class="verifyAge" id="AVW_verifyAge"></div>
+      </div>
+
+      <div class="initScreens" id="AC_HTP">
+        <div ontouchstart="ACQbtn('HTP_play')" class="btnPly" id="HTP_btnPly"></div>
+      </div>
+
+      <div class="initScreens" id="AC_AR">
+        <div ontouchstart="ACQbtn('AR_Go')" id="AR_btnGo"></div>
+        <input type="text"  id="AR_input" / >
+      </div>
+
+      <div class="initScreens" id="AC_AR2">
+        <div ontouchstart="ACQ('check')"id="AR2_tryAgainBtn"></div>
+      </div>
+
+      <div class="initScreens" id="AC_GO">
+        <div id="bestScoreLabel">Highest Score: 0</div>
+        <div id="lastScoreLabel">Last Score: 0</div>
+        <div ontouchstart="ACQbtn('GO_tryAgain')" class="tryAgain" id="GO_tryAgain"></div>
+      </div>
+      <!-- <div id='ACQalert' src='ageCheq/alert.png' ></div>
+      <img id='ACQlogo' src='ageCheq/logo-pang.png' />
+      <div id='PPmessage'></div>
+      <div id='PPCTA'><input type="text"  id="username" /></div>
+      <div id='PPCTA2'><img id='goBtn' ontouchstart="ACQ('register')" width='50%'src='ageCheq/pang-sbmt.png'/><img id='refreshBtn' ontouchstart="ACQ('check')" width='50%' src='ageCheq/pang-rfrsh.png' /></div> -->
+
+    </div>
+
+
+    <div id="hud">
+      <div id="scoreLabel">Score:<div id='score'>0</div></div>
+      <div id="livesLabel">Lives:<div id='lives'>5</div></div>
+    </div>
+
+    <!-- <div id="mainScreen">
+      <div id="MSmessage"><center>Welcome to Pang!</center><br><br><center style="font-size:12px;">Tap the black squares until they go away</center></div>
+      <div id="stats">
+        
+      </div>
+      <div onmousedown="gameHandler('start')" ontouchstart="gameHandler('start')" id="strtBtn"><center>Start</center></div>
+    </div> -->
+    <div id="eventLayer"></div>
+    <canvas  style='position:absolute;left:0px;top:0px;' id='cvs'></canvas>
+        
+    </body>
+</html>

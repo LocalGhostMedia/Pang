@@ -1,0 +1,336 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+* {
+    -webkit-tap-highlight-color: rgba(0,0,0,0); /* make transparent link selection, adjust last value opacity 0 to 1.0 */
+}
+@font-face {
+      font-family: 'imagine_font';
+      font-style: normal;
+      font-weight: 400;
+      src: url('ageCheq/font/imagine_font.ttf');
+    }
+    
+    *,html,body{font-family: 'imagine_font'}
+    @viewport{
+      width: 1024;
+    }
+    #tb1{
+      position:absolute;
+      background:white;
+      -moz-border-radius: 15px;
+      border-radius: 15px;
+      opacity:0;
+      z-index:1;
+      text-align: center;
+      margin-top: 10px;
+      transition: opacity .8s;
+      -webkit-transition: opacity .8s;
+      box-shadow: 1px 1px 2px #888888;
+      z-index:10;
+        -webkit-touch-callout: none;
+        -webkit-user-select: none;
+        -khtml-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+
+    }
+    span {
+      padding-left:10px;padding-right: 10px;
+      display: inline-block;
+      vertical-align: middle;
+      line-height: normal;      
+    }
+  #ageCheqScreenPP{
+        z-index:100;
+        font-family:"imagine_font";
+        font-size:11px;
+        line-height:120%;
+        color:rgb(218,218,234);
+        text-align:center;
+        position: absolute;
+        left:0px;top:0px;
+        display:none;
+        
+      }
+      #ACQlogo{
+        position:absolute;
+        top:7%;
+        width:30%;
+        left:35%;
+      }/*
+      #ACQalert{
+        position:absolute;
+        background-image: url("ageCheq/alert.png");
+        background-repeat: no-repeat;
+        width:168px;
+        top:0px;
+        right:0px;
+        height:230px;
+        background-position-y:-20px; 
+      }*/
+      #PPCTA{
+
+        width:50%;
+        bottom:5%;
+        left:25%; 
+        position:absolute;
+        height:auto;
+        font-family:'imagine_font';
+        font-size:30px;
+        color:rgb(255,255,255);
+        text-align:center;
+        border-radius: 3px;
+        background-color: rgb(241, 171, 104);
+        border-radius: 10px;
+        padding-top:10px;
+        padding-bottom:10px;
+      }
+      #PPCTA2{
+
+        width:20%;
+        bottom:5%;
+        right:0%;
+        position:absolute;
+        height:auto;
+      }
+
+      #hud{
+        position:absolute;
+        bottom:0px;
+        left:5px;
+        height:50px;
+        z-index:5;
+        width:80%;
+         -webkit-user-select: none;
+      -khtml-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      user-select: none;
+      pointer-events:none;
+        display:none;
+
+        font-size:30px;
+      }
+      #scoreLabel{
+        position:absolute;
+        bottom:80px;
+        padding-left:10px;
+        color:white;
+        float:left;
+      }
+      #livesLabel{
+        padding-left:10px;
+        color:white;
+        float:left;
+      }
+      #score, #lives{float:right;}
+
+      #mainScreen{
+        position:absolute;
+/*        top:10%;
+        bottom:10%;
+        left:10%;
+        right:10%;*/
+        background:white;
+        opacity:.9;
+        z-index:-10;
+        border-radius: 20px;
+        font-size:20px;
+        color:black;
+        display:none;
+      }
+      #MSmessage{position:relative;margin-top:10%;}
+      #stats{
+        position:absolute;
+        left:20%;
+        font-size:20px;
+        top:40%;
+      }
+      #strtBtn{
+        position:absolute;
+        width:50%;
+        height:10%;
+        background:black;
+        left:25%;
+        border-radius: 10px;
+        bottom:10%;
+        padding-top:5%;
+        font-size:20px;
+        opacity:.8;
+        color:white;
+        -webkit-appearance:none;
+        -webkit-tap-highlight-color: transparent;
+
+      }
+
+      #bestScoreLabel{
+        color: rgb(155, 204, 155);
+        position: absolute;
+        font-size: 50px;
+        width: 650px;
+        top: 170px;
+        left: 42px;
+        text-align: left;
+      }
+      #lastScoreLabel{
+        color: rgb(155, 204, 155);
+        position: absolute;
+        width:550px;
+        font-size: 50px;
+        top: 235px;
+        left: 42px;
+        text-align: left;
+      }
+      #username{
+        position:relative;
+        height:40px;
+        width:95%;
+        border-radius: 10px;
+
+        font-size:30px;
+      }
+      #refreshBtn{
+        display:none;
+      }
+      #debug{
+        position:absolute;
+        width:100%;
+        top:20px;
+        left:0px;
+        height:60px;
+        color:black;
+        z-index:50;
+      }
+      #eventLayer{
+       position: absolute;
+        left: 0px;
+        top: 0px;
+        z-index: 0;
+      }
+      html {
+          -ms-touch-action: manipulation;
+          touch-action: manipulation;
+      }
+
+
+      #AVW_btnPly{
+        position: absolute;
+        bottom:10%;
+        z-index:99999;
+        left:3%;
+      }
+       #AVW_verifyAge{
+        position: absolute;
+        bottom:10%;
+        z-index:99999;
+        right:3%;
+      } 
+      #HTP_btnPly{
+        position: absolute;
+        bottom:10%;
+      }
+      .verifyAge{
+        background:url(ageCheq/btn-verify.png);
+        position:relative;
+        width:493px;
+        height:104px;
+      }
+      .btnPly{
+        background:url(ageCheq/btn-play.png);
+        position:relative;
+        width:414px;
+        height:104px;
+      }
+      #AC_HTP{
+        background:url(ageCheq/bkgrd-howtoplay.png);
+        height:521px;
+        background-repeat: no-repeat;
+        display:none;
+      }
+      #AC_AVW{ 
+        height:521px;
+        background:url(ageCheq/bkgrd-ageverifywarning.png);
+        display:block;
+      }
+      #AC_AR{
+        display:none;
+        height:588px;
+        background:url(ageCheq/bkgrd-wecare.png);
+      }
+      #AC_AR2{
+        display:none;
+        height:588px;
+        background:url(ageCheq/bkgrd-notapproved.png);
+      }
+      #AC_GO{
+        display:none;
+        height:406px;
+        background:url(ageCheq/bkgrd-gameover.png);
+      }
+      .tryAgain{
+        position: relative;
+        width: 498px;
+        height: 104px;
+        background: url(ageCheq/btn-tryagain.png);
+      }
+      .initScreens{
+        width:1004px;
+        position: absolute;
+        left:10px;
+      }
+      #AR_btnGo{
+        width:150px;
+        height:104px;
+        background:url(ageCheq/btn-go.png);
+        position: absolute;
+        bottom: 10%;
+        right:5%;
+      }
+      #AR_input{
+        position: absolute;
+        bottom: 10%;
+        left: 5%;
+        font-size: 60px;
+        height: 80px;
+        width: 650px;
+        margin-top: 10px;
+      }
+      #GO_tryAgain{
+        top: 280px;
+        left: 480px;
+        z-index:20;     
+        width: 498px;
+        position: absolute;
+      }
+      #AR2_tryAgainBtn{
+        position:absolute;
+        width:498px;
+        height:101px;
+        background:url(ageCheq/btn-tryagain.png);
+        bottom:10%;
+      }
+      #AVWmessage{
+        height: 40px;
+        font-size: 50px;
+        top: 170px;
+        position: absolute;
+        left: 100px;
+        color: red;
+      }
